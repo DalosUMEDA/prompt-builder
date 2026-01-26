@@ -1,0 +1,104 @@
+import { dbService } from '../db.js'
+import { showMessage } from '../components/message.js'
+import { setFooter } from '../components/footer.js'
+
+let rows = []
+
+export function renderRegister(container) {
+  setFooter({ mode: 'register' })
+  document.querySelector('#action').textContent = '登録'
+  document.querySelector('#action').dataset.page = 'register'
+
+  rows = [{ jp: '', en: '' }]
+
+  container.innerHTML = `
+    <div class="register-page">
+      <div id="rows"></div>
+      <button id="add-row">＋ 行を追加</button>
+    </div>
+  `
+
+  renderRows()
+  document.getElementById('add-row').onclick = addRow
+}
+
+function renderRows() {
+  const box = document.getElementById('rows')
+  box.innerHTML = ''
+
+  rows.forEach((row, i) => {
+    const div = document.createElement('div')
+    div.className = 'input-row'
+    div.innerHTML = `
+      <div class="input-row">
+        <input placeholder="日本語">
+        <input placeholder="英語">
+        ${rows.length > 1 ? `<button data-i="${i}" class="delete-row" title="行を削除">✕</button>` : ''}
+      </div>
+    `
+
+    const [jp, en] = div.querySelectorAll('input')
+    jp.value = row.jp
+    en.value = row.en
+
+    jp.oninput = e => (rows[i].jp = e.target.value)
+    en.oninput = e => (rows[i].en = e.target.value)
+
+    const del = div.querySelector('button')
+    if (del) {
+      del.onclick = () => {
+        rows.splice(i, 1)
+        renderRows()
+      }
+    }
+
+    box.appendChild(div)
+  })
+}
+
+function addRow() {
+  rows.push({ jp: '', en: '' })
+  renderRows()
+}
+
+export async function handleRegister() {
+  let added = 0
+  let updated = 0
+  const errors = []
+
+  rows.forEach((r, i) => {
+    if (!r.jp && !r.en) return  // 完全空行は無視
+
+    if (!r.jp || !r.en) {
+      errors.push(i + 1)
+    }
+  })
+
+  if (errors.length > 0) {
+    showMessage({
+      type: 'error',
+      text: `${errors.join(', ')}行目：日本語と英語を両方入力してください`
+    })
+    return
+  }
+
+  for (const r of rows) {
+    if (!r.jp || !r.en) continue
+
+    const existing = await dbService.findByJp(r.jp)
+    if (existing && existing.en !== r.en) {
+      const ok = confirm(`「${r.jp}」は既に登録されています。上書きしますか？`)
+      if (!ok) continue
+    }
+
+    const result = await dbService.addOrUpdateByJp(r)
+    if (result.type === 'add') added++
+    if (result.type === 'update') updated++
+  }
+
+  showMessage({
+    type: 'success',
+    text: `追加 ${added}件 / 更新 ${updated}件`
+  })
+}
+
