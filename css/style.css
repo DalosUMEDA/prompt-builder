@@ -150,6 +150,11 @@ textarea {
   gap: 8px;
 }
 
+.word-buttons button.selected {
+  background-color: #4a90e2 !important;
+  color: white;
+}
+
 /*messages*/
 .modal-overlay {
   position: fixed;

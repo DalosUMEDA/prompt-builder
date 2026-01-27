@@ -42,27 +42,51 @@ async function renderWordButtons(container) {
   container.innerHTML = ''
 
   words.forEach(word => {
-    const btn = document.createElement('button')
-    btn.textContent = word.jp
-
-    btn.onclick = () => {
-      if (selectedJpWords.includes(word.jp)) return
-      selectedJpWords.push(word.jp)
-      updateView()
-    }
+    const btn = createWordButton(word)
 
     container.appendChild(btn)
   })
+}
+
+function createWordButton(word) {
+  const btn = document.createElement('button')
+  btn.textContent = word.jp
+  btn.dataset.jp = word.jp
+
+  btn.onclick = () => {
+    toggleWord(word.jp)
+  }
+
+  return btn
+}
+
+function toggleWord(jp) {
+  const index = selectedJpWords.indexOf(jp)
+
+  if (index >= 0) {
+    // すでに選択されている → 削除
+    selectedJpWords.splice(index, 1)
+  } else {
+    // 未選択 → 追加
+    selectedJpWords.push(jp)
+  }
+
+  updateView()
 }
 
 function updateView() {
   // 入力欄
   jpInputEl.value = selectedJpWords.join('、')
 
-  // ボタンのEnable/Disable
-  document.querySelectorAll('.word-buttons button').forEach(btn => {
-    btn.disabled = selectedJpWords.includes(btn.textContent)
-  })
+  // ボタンの選択状態を同期
+  document
+    .querySelectorAll('.word-buttons button')
+    .forEach(btn => {
+      btn.classList.toggle(
+        'selected',
+        selectedJpWords.includes(btn.dataset.jp)
+      )
+    })
 
   // コピー可否
   copyBtn && (copyBtn.disabled = enOutputEl.value.length === 0)
