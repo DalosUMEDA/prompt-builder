@@ -4,6 +4,7 @@ import { showMessage } from '../components/message.js'
 import { setFooter } from '../components/footer.js'
 
 let selectedJpWords = []
+let selectedTags = []
 let jpInputEl, enOutputEl, copyBtn
 
 export async function renderOutput(container) {
@@ -17,12 +18,18 @@ export async function renderOutput(container) {
   enOutputEl = createTextarea('英語出力')
   enOutputEl.readOnly = true
 
-  const buttonsArea = document.createElement('div')
-  buttonsArea.className = 'word-buttons'
+  const words = await dbService.getAllWords()
 
-  await renderWordButtons(buttonsArea)
+  const tagsButtonArea = document.createElement('div')
+  tagsButtonArea.className = 'tag-buttons'
+  const wordsButtonsArea = document.createElement('div')
+  wordsButtonsArea.className = 'word-buttons'
+  await renderTagButtons(tagsButtonArea, wordsButtonsArea, words)
 
-  wrapper.append(jpInputEl, enOutputEl, buttonsArea)
+  // 初回のみすべてのタグを表示
+  await renderWordButtons(wordsButtonsArea, words)
+
+  wrapper.append(jpInputEl, enOutputEl, tagsButtonArea, wordsButtonsArea)
   container.appendChild(wrapper)
 
   updateView()
@@ -37,8 +44,7 @@ function createTextarea(placeholder) {
   return ta
 }
 
-async function renderWordButtons(container) {
-  const words = await dbService.getAllWords()
+async function renderWordButtons(container, words) {
   container.innerHTML = ''
 
   words.forEach(word => {
@@ -52,6 +58,10 @@ function createWordButton(word) {
   const btn = document.createElement('button')
   btn.textContent = word.jp
   btn.dataset.jp = word.jp
+  // 選択済みの単語は引き続き選択状態にする
+  if (selectedJpWords.includes(word.jp)) {
+    btn.classList.add('selected')
+  }
 
   btn.onclick = () => {
     toggleWord(word.jp)
@@ -88,8 +98,59 @@ function updateView() {
       )
     })
 
+  document
+    .querySelectorAll('.tag-buttons button')
+    .forEach(btn => {
+      btn.classList.toggle(
+        'selected',
+        selectedTags.includes(btn.dataset.tag)
+      )
+    })
+
   // コピー可否
   copyBtn && (copyBtn.disabled = enOutputEl.value.length === 0)
+}
+
+async function renderTagButtons(tagContainer, wordContainer, words) {
+  const allTags = [...new Set(words.flatMap(w => w.tags))]
+  tagContainer.innerHTML = ''
+
+  allTags.forEach(tag => {
+    const btn = createTagButton(wordContainer, words, tag)
+
+    tagContainer.appendChild(btn)
+  })
+}
+
+function createTagButton(wordContainer, allWords, tag) {
+  const btn = document.createElement('button')
+  btn.textContent = tag
+  btn.dataset.tag = tag
+
+  btn.onclick = () => {
+    const index = selectedTags.indexOf(tag)
+    if (index >= 0) {
+      selectedTags.splice(index, 1)
+    } else {
+      selectedTags.push(tag)
+    }
+    updateView()
+    updateTagFilter(wordContainer, allWords)
+  }
+
+  return btn
+}
+
+function updateTagFilter(wordContainer, allWords) {
+  const filtered = filterWordsByTag(allWords, selectedTags)
+  renderWordButtons(wordContainer, filtered)
+}
+
+function filterWordsByTag(words, selectedTags) {
+  if (selectedTags.length === 0) return words
+  return words.filter(word =>
+    selectedTags.some(tag => word.tags.includes(tag))
+  )
 }
 
 export async function handleConvert() {
