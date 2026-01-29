@@ -5,7 +5,7 @@ import { router } from '../router.js'
 import { setFooter } from '../components/footer.js'
 
 let editingWord = null
-let jpInput, enInput
+let jpInput, enInput, tagsInput
 
 export async function renderEdit(container, params) {
   setFooter({ mode: 'edit' })
@@ -25,9 +25,13 @@ export async function renderEdit(container, params) {
   enInput = document.createElement('input')
   enInput.value = editingWord.en
 
+  tagsInput = document.createElement('input')
+  tagsInput.value = (editingWord.tags ?? []).join(",")
+  tagsInput.placeholder = 'タグ（カンマ区切り）'
+
   const wrapper = document.createElement('div')
   wrapper.className = 'edit-page'
-  wrapper.append(jpInput, enInput)
+  wrapper.append(jpInput, enInput, tagsInput)
 
   container.appendChild(wrapper)
 }
@@ -35,6 +39,7 @@ export async function renderEdit(container, params) {
 export async function handleUpdate() {
   const jp = jpInput.value.trim()
   const en = enInput.value.trim()
+  const tags = parseTags(tagsInput.value)
 
   // 両方空 → 削除
   if (!jp && !en) {
@@ -61,9 +66,16 @@ export async function handleUpdate() {
     return
   }
 
-  await dbService.updateWord(editingWord.id, { jp, en })
+  await dbService.updateWord(editingWord.id, { jp, en, tags })
 
   showMessage({ type: 'success', text: '更新しました' })
   router.go('list')
 }
 
+function parseTags(input) {
+  return input
+    .split(',')
+    .map(t => t.trim())
+    .filter(t => t.length > 0)
+    .filter((t, i, arr) => arr.indexOf(t) === i) // 重複除外
+}
