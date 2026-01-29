@@ -9,7 +9,7 @@ export function renderRegister(container) {
   document.querySelector('#action').textContent = '登録'
   document.querySelector('#action').dataset.page = 'register'
 
-  rows = [{ jp: '', en: '' }]
+  rows = [{ jp: '', en: '', tags: [] }]
 
   container.innerHTML = `
     <div class="register-page">
@@ -33,16 +33,19 @@ function renderRows() {
       <div class="input-row">
         <input placeholder="日本語">
         <input placeholder="英語">
+        <input placeholder="タグ（カンマ区切り）">
         ${rows.length > 1 ? `<button data-i="${i}" class="delete-row" title="行を削除">✕</button>` : ''}
       </div>
     `
 
-    const [jp, en] = div.querySelectorAll('input')
+    const [jp, en, tags] = div.querySelectorAll('input')
     jp.value = row.jp
     en.value = row.en
+    tags.value = row.tags.join(",")
 
     jp.oninput = e => (rows[i].jp = e.target.value)
     en.oninput = e => (rows[i].en = e.target.value)
+    tags.oninput = e => (rows[i].tags = parseTags(e.target.value))
 
     const del = div.querySelector('button')
     if (del) {
@@ -57,8 +60,16 @@ function renderRows() {
 }
 
 function addRow() {
-  rows.push({ jp: '', en: '' })
+  rows.push({ jp: '', en: '', tags: [] })
   renderRows()
+}
+
+function parseTags(input) {
+  return input
+    .split(',')
+    .map(t => t.trim())
+    .filter(t => t.length > 0)
+    .filter((t, i, arr) => arr.indexOf(t) === i) // 重複除外
 }
 
 export async function handleRegister() {
