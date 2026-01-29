@@ -36,7 +36,7 @@ function createHeader() {
   const thead = document.createElement('thead')
   const tr = document.createElement('tr')
 
-  ;['日本語', 'プロンプトワード', '操作'].forEach(text => {
+  ;['日本語', 'プロンプトワード', 'タグ', '操作'].forEach(text => {
     const th = document.createElement('th')
     th.textContent = text
     tr.appendChild(th)
@@ -53,7 +53,7 @@ async function createBody() {
   if (words.length === 0) {
     const tr = document.createElement('tr')
     const td = document.createElement('td')
-    td.colSpan = 3
+    td.colSpan = 4
     td.textContent = '登録された単語はありません'
     tr.appendChild(td)
     tbody.appendChild(tr)
@@ -76,6 +76,14 @@ function createRow(word) {
   const enTd = document.createElement('td')
   enTd.textContent = word.en
 
+  const tagsTd = document.createElement('td')
+  word.tags.forEach(tag => {
+    const span = document.createElement('span')
+    span.textContent = tag
+    span.className = 'tag-label'
+    tagsTd.append(span)
+  })
+
   const actionTd = document.createElement('td')
 
   const editBtn = document.createElement('button')
@@ -89,7 +97,7 @@ function createRow(word) {
   deleteBtn.onclick = () => confirmDelete(word)
 
   actionTd.append(editBtn, deleteBtn)
-  tr.append(jpTd, enTd, actionTd)
+  tr.append(jpTd, enTd, tagsTd, actionTd)
 
   return tr
 }
