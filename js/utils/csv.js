@@ -47,13 +47,14 @@ export function importCSV(file) {
 
           const jp = cols[0].trim()
           const en = cols[1].trim()
+          const tags = parseTagsFromCSV(cols[2].trim() ?? '')
 
           // ★ ヘッダ判定
           if (index === 0 && isHeader(jp, en)) return
 
           if (!jp || !en) return
 
-          rows.push({ jp, en })
+          rows.push({ jp, en, tags })
         })
 
         resolve(rows)
@@ -77,10 +78,18 @@ function isHeader(jp, en) {
   )
 }
 
+function parseTagsFromCSV(value) {
+  if (!value) return []
+  return value
+    .split('|')
+    .map(t => t.trim())
+    .filter(Boolean)
+}
+
 export function exportCSV(words) {
-  const header = 'jp,en'
+  const header = 'jp,en,tags'
   const body = words
-    .map(w => `${escape(w.jp)},${escape(w.en)}`)
+    .map(w => `${escape_from_words(w.jp)},${escape_from_words(w.en)},` + w.tags.map(tag => `${escape_from_tag(tag)}`).join('|'))
     .join('\n')
 
   const csv = [header, body].join('\n')
@@ -96,9 +105,16 @@ export function exportCSV(words) {
   URL.revokeObjectURL(url)
 }
 
-function escape(value) {
+function escape_from_words(value) {
   if (value.includes(',') || value.includes('"')) {
     return `"${value.replace(/"/g, '""')}"`
+  }
+  return value
+}
+
+function escape_from_tag(value) {
+  if (value.includes('|')) {
+    return `"${value.replaceAll('|', '')}"`
   }
   return value
 }
