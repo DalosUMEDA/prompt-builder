@@ -2,11 +2,11 @@
 import { dbService } from '../db.js'
 import { showMessage } from '../components/message.js'
 import { setFooter } from '../components/footer.js'
+import { sortWords, SORT_TYPES } from '../utils/sort.js'
 
 let selectedJpWords = []
 let selectedTags = []
-let sortKey = 'jp'  // 'jp' | 'en'
-let sortOrder = 'asc' // 'asc' | 'desc'
+let currentSort = SORT_TYPES.JP_ASC
 let jpInputEl, enOutputEl, copyBtn
 let allWords = []
 const TAG_COLLAPSE_LIMIT = 8
@@ -71,9 +71,7 @@ function createSortSelect() {
   sortSelect.value = 'jp-asc'
 
   sortSelect.onchange = e => {
-    const [key, order] = e.target.value.split('-')
-    sortKey = key
-    sortOrder = order
+    currentSort = e.target.value
     updateWordView()
   }
   return sortSelect
@@ -81,17 +79,10 @@ function createSortSelect() {
 
 function updateWordView() {
   const filtered = filterWordsByTag(allWords, selectedTags)
-  const sorted = sortWords(filtered)
+  const sorted = sortWords(filtered, currentSort)
   const container = document.querySelector('.word-buttons')
 
   renderWordButtons(container, sorted)
-}
-
-function sortWords(words) {
-  return [...words].sort((a, b) => {
-    const order = sortOrder === 'asc' ? 1 : -1
-    return a[sortKey].localeCompare(b[sortKey], 'ja') * order
-  })
 }
 
 async function renderWordButtons(container, words) {
