@@ -150,6 +150,10 @@ textarea {
   gap: 8px;
 }
 
+.tag-buttons {
+  max-height: none;
+}
+
 .word-buttons button.selected {
   background-color: #4a90e2 !important;
   color: white;
@@ -263,6 +267,37 @@ textarea {
   background-color: #eee;
   border-radius: 4px;
   font-size: 0.85em;
+}
+
+.tag-toggle {
+  background: transparent;
+  border: 1px dashed #ccc;
+  color: #666;
+  font-size: 13px;
+}
+
+.tag-toggle:hover {
+  background-color: #f5f5f5;
+}
+
+select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.output-page select {
+  margin: 12px 0 8px;
+  max-width: 240px;
+}
+
+.output-page select:focus {
+  outline: none;
+  border-color: #4fe24a;
+  box-shadow: 0 0 0 2px rgba(79, 226, 74, 0.25);
 }
 
 @keyframes fadeIn {

@@ -2,10 +2,15 @@
 import { dbService } from '../db.js'
 import { showMessage } from '../components/message.js'
 import { setFooter } from '../components/footer.js'
+import { sortWords, SORT_TYPES } from '../utils/sort.js'
 
 let selectedJpWords = []
 let selectedTags = []
+let currentSort = SORT_TYPES.JP_ASC
 let jpInputEl, enOutputEl, copyBtn
+let allWords = []
+const TAG_COLLAPSE_LIMIT = 8
+let isTagExpanded = false
 
 export async function renderOutput(container) {
   setFooter({ mode: 'output' })
@@ -18,21 +23,32 @@ export async function renderOutput(container) {
   enOutputEl = createTextarea('英語出力')
   enOutputEl.readOnly = true
 
-  const words = await dbService.getAllWords()
+  allWords = await dbService.getAllWords()
+
+  const sortSelect = createSortSelect()
 
   const tagsButtonArea = document.createElement('div')
   tagsButtonArea.className = 'tag-buttons'
   const wordsButtonsArea = document.createElement('div')
   wordsButtonsArea.className = 'word-buttons'
-  await renderTagButtons(tagsButtonArea, wordsButtonsArea, words)
+  await renderTagButtons(tagsButtonArea, wordsButtonsArea, allWords)
 
   // 初回のみすべてのタグを表示
-  await renderWordButtons(wordsButtonsArea, words)
+  await renderWordButtons(wordsButtonsArea, allWords)
 
-  wrapper.append(jpInputEl, enOutputEl, tagsButtonArea, wordsButtonsArea)
+  wrapper.append(
+    jpInputEl,
+    enOutputEl,
+    sortSelect,
+    document.createElement('hr'),
+    tagsButtonArea,
+    document.createElement('hr'),
+    wordsButtonsArea
+  )
   container.appendChild(wrapper)
 
   updateView()
+  updateWordView()
 }
 
 function createTextarea(placeholder) {
@@ -42,6 +58,31 @@ function createTextarea(placeholder) {
   ta.classList.add('output-area')
   ta.rows = 5
   return ta
+}
+
+function createSortSelect() {
+  const sortSelect = document.createElement('select')
+  sortSelect.innerHTML = `
+    <option value="jp-asc">日本語（昇順）</option>
+    <option value="jp-desc">日本語（降順）</option>
+    <option value="en-asc">英語（昇順）</option>
+    <option value="en-desc">英語（降順）</option>
+  `
+  sortSelect.value = 'jp-asc'
+
+  sortSelect.onchange = e => {
+    currentSort = e.target.value
+    updateWordView()
+  }
+  return sortSelect
+}
+
+function updateWordView() {
+  const filtered = filterWordsByTag(allWords, selectedTags)
+  const sorted = sortWords(filtered, currentSort)
+  const container = document.querySelector('.word-buttons')
+
+  renderWordButtons(container, sorted)
 }
 
 async function renderWordButtons(container, words) {
@@ -115,11 +156,32 @@ async function renderTagButtons(tagContainer, wordContainer, words) {
   const allTags = [...new Set(words.flatMap(w => w.tags))]
   tagContainer.innerHTML = ''
 
-  allTags.forEach(tag => {
+  const visibleTags = isTagExpanded
+    ? allTags
+    : allTags.slice(0, TAG_COLLAPSE_LIMIT)
+
+  visibleTags.forEach(tag => {
     const btn = createTagButton(wordContainer, words, tag)
 
     tagContainer.appendChild(btn)
   })
+
+  if (allTags.length > TAG_COLLAPSE_LIMIT) {
+    const toggleBtn = document.createElement('button')
+    toggleBtn.className = 'tag-toggle'
+
+    toggleBtn.textContent = isTagExpanded
+      ? '− 折りたたむ'
+      : `＋ 他${allTags.length - TAG_COLLAPSE_LIMIT}件`
+
+    toggleBtn.onclick = () => {
+      isTagExpanded = !isTagExpanded
+      renderTagButtons(tagContainer, wordContainer, words)
+      updateView()
+    }
+
+    tagContainer.appendChild(toggleBtn)
+  }
 }
 
 function createTagButton(wordContainer, allWords, tag) {
@@ -135,15 +197,10 @@ function createTagButton(wordContainer, allWords, tag) {
       selectedTags.push(tag)
     }
     updateView()
-    updateTagFilter(wordContainer, allWords)
+    updateWordView(wordContainer, allWords)
   }
 
   return btn
-}
-
-function updateTagFilter(wordContainer, allWords) {
-  const filtered = filterWordsByTag(allWords, selectedTags)
-  renderWordButtons(wordContainer, filtered)
 }
 
 function filterWordsByTag(words, selectedTags) {
