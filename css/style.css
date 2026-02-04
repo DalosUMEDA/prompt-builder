@@ -86,7 +86,7 @@ button.danger {
   color: #fff;
 }
 
-input,
+input:not(#csv-file),
 textarea {
   width: 100%;
   padding: 8px 10px;
@@ -97,6 +97,13 @@ textarea {
 
 textarea {
   resize: vertical;
+}
+
+#csv-file {
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  border: 1px solid #ccc;
+  font-size: 14px;
 }
 
 .register-page,

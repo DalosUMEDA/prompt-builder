@@ -4,20 +4,27 @@ import { handleConvert, handleCopy } from '../pages/output.js'
 
 // components/footer.js
 
-let actionBtn, copyBtn
+let fileInput, actionBtn, copyBtn
 
 export function renderFooter() {
   const f = document.getElementById('footer')
   f.innerHTML = `
+    <input
+      type="file"
+      id="csv-file"
+      accept=".csv"
+    />
     <button id="action"></button>
     <button id="copy">コピー</button>
   `
+  fileInput = f.querySelector('#csv-file')
   actionBtn = f.querySelector('#action')
   copyBtn = f.querySelector('#copy')
 }
 
 export function setFooter({ mode }) {
   // 一旦全部非表示
+  fileInput.style.display = 'none'
   actionBtn.style.display = 'none'
   copyBtn.style.display = 'none'
   actionBtn.onclick = null
@@ -52,6 +59,7 @@ export function setFooter({ mode }) {
       actionBtn.textContent = 'CSVインポート'
       copyBtn.textContent = 'CSVエクスポート'
 
+      fileInput.style.display = 'inline-block'
       actionBtn.style.display = 'inline-block'
       copyBtn.style.display = 'inline-block'
 

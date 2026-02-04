@@ -18,13 +18,6 @@ export async function renderList(container) {
 
   container.innerHTML = `
     <h2>単語一覧</h2>
-
-    <input
-      type="file"
-      id="csv-file"
-      accept=".csv"
-    />
-
     <div id="list"></div>
   `
 
