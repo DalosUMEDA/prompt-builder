@@ -14,7 +14,6 @@ let isTagExpanded = false
 
 export async function renderOutput(container) {
   setFooter({ mode: 'output' })
-  selectedJpWords = []
 
   const wrapper = document.createElement('div')
   wrapper.className = 'output-page'
@@ -148,6 +147,16 @@ function updateView() {
       )
     })
 
+  // 全解除ボタン制御
+  document.querySelector('#clear-words')?.toggleAttribute(
+    'disabled',
+    selectedJpWords.length === 0
+  )
+  document.querySelector('#clear-tags')?.toggleAttribute(
+    'disabled',
+    selectedTags.length === 0
+  )
+
   // コピー可否
   copyBtn && (copyBtn.disabled = enOutputEl.value.length === 0)
 }
@@ -232,5 +241,18 @@ export async function handleCopy() {
 
   await navigator.clipboard.writeText(enOutputEl.value)
   showMessage({ type: 'success', text: 'コピーしました' })
+}
+
+export function clearAllWords() {
+  selectedJpWords = []
+  console.log("aaa")
+  updateView()
+  updateWordView()
+}
+
+export function clearAllTags() {
+  selectedTags = []
+  updateView()
+  updateWordView()
 }
 
