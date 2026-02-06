@@ -14,7 +14,6 @@ let isTagExpanded = false
 
 export async function renderOutput(container) {
   setFooter({ mode: 'output' })
-  selectedJpWords = []
 
   const wrapper = document.createElement('div')
   wrapper.className = 'output-page'

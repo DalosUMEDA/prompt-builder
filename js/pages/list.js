@@ -4,6 +4,11 @@ import { dbService } from '../db.js'
 import { showMessage } from '../components/message.js'
 import { router } from '../router.js'
 import { setFooter } from '../components/footer.js'
+import { sortWords, SORT_TYPES } from '../utils/sort.js'
+
+let currentSort = SORT_TYPES.JP_ASC
+let allWords = []
+let sortedWords = []
 
 export async function renderList(container) {
   setFooter({ mode: 'list' })
@@ -41,9 +46,10 @@ function createHeader() {
 
 async function createBody() {
   const tbody = document.createElement('tbody')
-  const words = await dbService.getAllWords()
+  allWords = await dbService.getAllWords()
+  sortedWords = sortWords(allWords, currentSort)
 
-  if (words.length === 0) {
+  if (sortedWords.length === 0) {
     const tr = document.createElement('tr')
     const td = document.createElement('td')
     td.colSpan = 4
@@ -53,7 +59,7 @@ async function createBody() {
     return tbody
   }
 
-  words.forEach(word => {
+  sortedWords.forEach(word => {
     tbody.appendChild(createRow(word))
   })
 
