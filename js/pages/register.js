@@ -3,6 +3,8 @@ import { showMessage } from '../components/message.js'
 import { setFooter } from '../components/footer.js'
 
 let rows = []
+let allTags = []
+let activeRowIndex = 0
 
 export function renderRegister(container) {
   setFooter({ mode: 'register' })
@@ -10,16 +12,26 @@ export function renderRegister(container) {
   document.querySelector('#action').dataset.page = 'register'
 
   rows = [{ jp: '', en: '', tags: [] }]
+  loadAllTags()
 
   container.innerHTML = `
     <div class="register-page">
       <div id="rows"></div>
       <button id="add-row">＋ 行を追加</button>
+      <div class="tag-selector">
+        <p>登録済みタグ</p>
+        <div class="tag-buttons"></div>
+      </div>
     </div>
   `
 
   renderRows()
+  loadAndRenderTags()
   document.getElementById('add-row').onclick = addRow
+}
+
+async function loadAllTags() {
+  allTags = await dbService.getAllTags()
 }
 
 function renderRows() {
@@ -39,13 +51,32 @@ function renderRows() {
     `
 
     const [jp, en, tags] = div.querySelectorAll('input')
+    const tagButtons = div.querySelector('.register-tags')
+
+    renderTagButtons(tagButtons)
     jp.value = row.jp
     en.value = row.en
     tags.value = row.tags.join(",")
 
+    jp.onfocus = () => {
+      activeRowIndex = i
+      renderTagButtons()
+    }
+    en.onfocus = () => {
+      activeRowIndex = i
+      renderTagButtons()
+    }
+    tags.onfocus = () => {
+      activeRowIndex = i
+      renderTagButtons()
+    }
+
     jp.oninput = e => (rows[i].jp = e.target.value)
     en.oninput = e => (rows[i].en = e.target.value)
-    tags.oninput = e => (rows[i].tags = parseTags(e.target.value))
+    tags.oninput = e => {
+      rows[i].tags = parseTags(e.target.value)
+      renderTagButtons()
+    }
 
     const del = div.querySelector('button')
     if (del) {
@@ -61,6 +92,7 @@ function renderRows() {
 
 function addRow() {
   rows.push({ jp: '', en: '', tags: [] })
+  activeRowIndex = rows.length - 1
   renderRows()
 }
 
@@ -113,3 +145,43 @@ export async function handleRegister() {
   })
 }
 
+async function loadAndRenderTags() {
+  allTags = await dbService.getAllTags()
+  renderTagButtons()
+}
+
+function renderTagButtons() {
+  const container = document.querySelector('.tag-buttons')
+  if (!container) return
+
+  container.innerHTML = ''
+
+  allTags.forEach(tag => {
+    const btn = document.createElement('button')
+    btn.textContent = tag
+
+    btn.classList.toggle(
+      'selected',
+      rows[activeRowIndex]?.tags.includes(tag)
+    )
+
+    btn.onclick = () => toggleTagForActiveRow(tag)
+
+    container.appendChild(btn)
+  })
+}
+
+function toggleTagForActiveRow(tag) {
+  const row = rows[activeRowIndex]
+  if (!row) return
+
+  const index = row.tags.indexOf(tag)
+  if (index >= 0) {
+    row.tags.splice(index, 1)
+  } else {
+    row.tags.push(tag)
+  }
+
+  renderRows()
+  renderTagButtons()
+}
