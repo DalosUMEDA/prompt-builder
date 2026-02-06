@@ -198,6 +198,11 @@ function createTagButton(wordContainer, allWords, tag) {
   btn.textContent = tag
   btn.dataset.tag = tag
 
+  // 選択状態の同期（DOM生成時）
+  if (selectedTags.includes(tag)) {
+    btn.classList.add('selected')
+  }
+
   btn.onclick = () => {
     const index = selectedTags.indexOf(tag)
     if (index >= 0) {
