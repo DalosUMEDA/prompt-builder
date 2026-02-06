@@ -11,7 +11,8 @@ export const dbService = {
   updateWord,
   deleteWord,
   findByJp,
-  bulkAdd
+  bulkAdd,
+  getAllTags
 }
 
 function init() {
@@ -145,4 +146,9 @@ function request(req) {
     req.onsuccess = () => resolve(req.result)
     req.onerror = () => reject(req.error)
   })
+}
+
+async function getAllTags() {
+  const words = await this.getAllWords()
+  return [...new Set(words.flatMap(w => w.tags || []))]
 }

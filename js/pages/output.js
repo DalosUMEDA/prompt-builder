@@ -162,7 +162,7 @@ function updateView() {
 }
 
 async function renderTagButtons(tagContainer, wordContainer, words) {
-  const allTags = [...new Set(words.flatMap(w => w.tags))]
+  const allTags = await dbService.getAllTags()
   tagContainer.innerHTML = ''
 
   const visibleTags = isTagExpanded
