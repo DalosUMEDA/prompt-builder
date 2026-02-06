@@ -34,12 +34,25 @@ function createHeader() {
   const thead = document.createElement('thead')
   const tr = document.createElement('tr')
 
-  ;['日本語', 'プロンプトワード', 'タグ', '操作'].forEach(text => {
-    const th = document.createElement('th')
-    th.textContent = text
-    tr.appendChild(th)
-  })
+  // 日本語
+  const jpTh = document.createElement('th')
+  jpTh.textContent = '日本語' + getSortMark('jp')
+  jpTh.style.cursor = 'pointer'
+  jpTh.onclick = () => toggleSort('jp')
 
+  // 英語
+  const enTh = document.createElement('th')
+  enTh.textContent = 'プロンプトワード' + getSortMark('en')
+  enTh.style.cursor = 'pointer'
+  enTh.onclick = () => toggleSort('en')
+
+  const tagTh = document.createElement('th')
+  tagTh.textContent = 'タグ'
+
+  const actionTh = document.createElement('th')
+  actionTh.textContent = '操作'
+
+  tr.append(jpTh, enTh, tagTh, actionTh)
   thead.appendChild(tr)
   return thead
 }
@@ -155,4 +168,49 @@ export async function handleImport() {
 export async function handleExport() {
   const words = await dbService.getAllWords()
   exportCSV(words)
+}
+
+function toggleSort(column) {
+  if (column === 'jp') {
+    currentSort =
+      currentSort === SORT_TYPES.JP_ASC
+        ? SORT_TYPES.JP_DESC
+        : SORT_TYPES.JP_ASC
+  }
+
+  if (column === 'en') {
+    currentSort =
+      currentSort === SORT_TYPES.EN_ASC
+        ? SORT_TYPES.EN_DESC
+        : SORT_TYPES.EN_ASC
+  }
+
+  rerenderTable()
+}
+
+function rerenderTable() {
+  const wrapper = document.querySelector('.list-page')
+  if (!wrapper) return
+
+  const oldTable = wrapper.querySelector('table')
+  if (oldTable) oldTable.remove()
+
+  const table = document.createElement('table')
+  table.className = 'word-table'
+  table.appendChild(createHeader())
+  createBody().then(tbody => table.appendChild(tbody))
+
+  wrapper.appendChild(table)
+}
+
+function getSortMark(column) {
+  if (column === 'jp') {
+    if (currentSort === SORT_TYPES.JP_ASC) return ' ▲'
+    if (currentSort === SORT_TYPES.JP_DESC) return ' ▼'
+  }
+  if (column === 'en') {
+    if (currentSort === SORT_TYPES.EN_ASC) return ' ▲'
+    if (currentSort === SORT_TYPES.EN_DESC) return ' ▼'
+  }
+  return ''
 }
